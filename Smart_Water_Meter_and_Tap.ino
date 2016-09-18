@@ -1,19 +1,34 @@
  /*
- ***************** TeJEEt Magar ***********************
+ ******************************* TeJEEt Magar ********************************
  *
- * --------Smart Tap Water Metering and Detection System
+ *
+ *
+ * ----Smart Tap Water Metering and Detection System
  *       And Automatic Tap Water Closing System---------
  *       
- *       COEP Cybage Hackathon 
+ *  In this Project we can able to calculate the current Flow rate
+ *  of water to the respective user in any Flat systme Homes
+ *
+ *   Sometimes we forgot to close the tap of water so the Water Wastage
+ *  may takes place so by this system we can close the main inlet of 
+ *   our Water Tap any We can Save the Water from wastage.....
+ *   
+ *   Also we can give the alert to user about Leakage and from user side
+ *   if no any action is takes place then System will automatically close
+ *   the main inlet of user and make them Panalty for water wastage this 
+ *   way we can save the water and make the People to aware about improper
+ *   usage of water
+ *       
  * 
  *     
+ *            COEP ( Mind-Spark) Cybage Hackathon  
  *
  *
  *
- *
- ******************************************************
- 
+ ***************************************************************************
  */
+
+
 #include <ESP8266WiFi.h>
 #include <Wire.h>
 #include "rgb_lcd.h"
@@ -21,15 +36,16 @@
 rgb_lcd lcd;
 
 
-  String apiKey = "PLATEPZ1RHHEBYS0"; 
-  const char* ssid = "Dlink"; 
-  const char* password = "9881283312"; 
-  const char* server = "api.thingspeak.com"; 
+String apiKey = "PLATEPZ1RHHEBYS0"; 
+const char* ssid = "Dlink"; 
+const char* password = "9881283312"; 
+const char* server = "api.thingspeak.com"; 
 
-byte Relay    = 16;
+
 
 byte sensorInterrupt = 0; 
 byte sensorPin       = 0;
+byte Relay    = 16;
 
 float calibrationFactor = 4.5;
 
@@ -43,19 +59,16 @@ unsigned long oldTime;
 
 WiFiClient client; 
 
-void setup()
-{
-  lcd.begin(16, 2);
-    
-//  lcd.setRGB(colorR, colorG, colorB);
-  
-  lcd.print("CYBAGE HAKATHON");
 
-    delay(1000);
- 
-  Serial.begin(115200);
-  
-  Serial.println();
+void setup()
+       
+{
+          lcd.begin(16, 2);
+          lcd.print("CYBAGE HAKATHON");
+          delay(10);
+          
+           Serial.begin(115200);
+           Serial.println();
            Serial.println();
            Serial.print("Connecting to ");
            Serial.println(ssid);
@@ -69,10 +82,10 @@ void setup()
            Serial.println("");
            Serial.println("WiFi connected");
            lcd.setCursor(0, 1); 
-        //   lcd.write("WiFi connected");
+
    
   pinMode(Relay, OUTPUT);
-  digitalWrite(Relay, HIGH);  
+  digitalWrite(Relay, LOW);  
   
   pinMode(sensorPin, INPUT);
   digitalWrite(Relay, HIGH);
@@ -87,7 +100,9 @@ void setup()
 }
 
 
+
 void loop()
+
 {
 
   if (totalMilliLitres >200)
@@ -104,65 +119,56 @@ void loop()
       }
 
 
-   if((millis() - oldTime) > 1000)   
-  { 
-    
-    detachInterrupt(sensorInterrupt);
-        
-    
-    flowRate = ((1000.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
-    
-    
-    oldTime = millis();
-    
-    
-    flowMilliLitres = (flowRate / 60) * 1000;
-    
-    totalMilliLitres += flowMilliLitres;
+     if((millis() - oldTime) > 1000)   
+      { 
       
-    unsigned int frac;
+        detachInterrupt(sensorInterrupt);
+          
+        flowRate = ((1000.0 / (millis() - oldTime)) * pulseCount) / calibrationFactor;
+        oldTime = millis();
+    
+        flowMilliLitres = (flowRate / 60) * 1000;
+        totalMilliLitres += flowMilliLitres;
+      
+        unsigned int frac;
     
    
-    Serial.print("Flow rate: ");
-    Serial.print(int(flowRate));  
-    Serial.print(".");             // Print the decimal point
+        Serial.print("Flow rate: ");
+        Serial.print(int(flowRate));  
+        Serial.print(".");         
 
-    frac = (flowRate - int(flowRate)) * 10;
-    Serial.print(frac, DEC) ;      // Print the fractional part of the variable
-    Serial.print("L/min");
+        frac = (flowRate - int(flowRate)) * 10;
+        Serial.print(frac, DEC) ;    
+        Serial.print("L/min");
    
-    Serial.print("  Current Liquid Flowing: ");             // Output separator
-    Serial.print(flowMilliLitres);
-    Serial.print("mL/Sec");
+        Serial.print("  Current Liquid Flowing: ");           
+        Serial.print(flowMilliLitres);
+        Serial.print("mL/Sec");
 
   
-    Serial.print("  Output Liquid Quantity: ");             // Output separator
-    Serial.print(totalMilliLitres);
-    Serial.println("mL");
+        Serial.print("  Output Liquid Quantity: ");          
+        Serial.print(totalMilliLitres);
+        Serial.println("mL");
     
-    lcd.setCursor(0, 1); 
-    lcd.print("Todays Use:");
+        lcd.setCursor(0, 1); 
+        lcd.print("Todays Use:");
 
-    lcd.setCursor(12, 1);
-     lcd.write(0b11011111); 
-    lcd.print(totalMilliLitres);
+        lcd.setCursor(12, 1);
+        lcd.write(0b11011111); 
+        lcd.print(totalMilliLitres);
 
-    
-
-
-    // Reset the pulse counter so we can start incrementing again
-    pulseCount = 0;
+       pulseCount = 0;
     
 
-    attachInterrupt(sensorInterrupt, pulseCounter, FALLING);
-  }
+        attachInterrupt(sensorInterrupt, pulseCounter, FALLING);
+      }
 
+  
   // For senfing data to Thingspeks Cloud
   if (client.connect(server,80))
       Serial.println("Sending Data to Thingspeks");
-
+            
             {
-
                 String postStr = apiKey;
                 postStr +="&field1=";
                 postStr += String(flowMilliLitres);
@@ -180,9 +186,12 @@ void loop()
                 client.print(postStr.length());
                 client.print("\n\n");
                 client.print(postStr);
+                
    
                 Serial.println("Data was Succesfully Sent on thingSpeks Channel");
                 Serial.print("\n\n");
+
+        // to close the main inlet Automatically if Lekage takes place 
 
                 if (totalMilliLitres >= 300)
                 {
@@ -200,22 +209,21 @@ void loop()
 
 
 void pulseCounter()
-{
- 
+
+{ 
   pulseCount++;
 }
 
 void breath(unsigned char color)
 {
-
-    for(int i=0; i<255; i++)
+  for(int i=0; i<255; i++)
     {
         lcd.setPWM(color, i);
         delay(5);
     }
-
     delay(500);
-    for(int i=254; i>=0; i--)
+  
+  for(int i=254; i>=0; i--)
     {
         lcd.setPWM(color, i);
         delay(5);
