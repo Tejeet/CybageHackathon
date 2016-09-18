@@ -56,6 +56,9 @@ unsigned int flowMilliLitres;
 unsigned long totalMilliLitres;
 
 unsigned long oldTime;
+unsigned long oldFlowval;
+int i=0;
+int prev;
 
 WiFiClient client; 
 
@@ -149,15 +152,31 @@ void loop()
         Serial.print("  Output Liquid Quantity: ");          
         Serial.print(totalMilliLitres);
         Serial.println("mL");
-    
+
+        if (flowMilliLitres==0)
+        {
+          lcd.setCursor(0, 0);
+          lcd.print("CYBAGE HAKATHON");
+          lcd.setCursor(0, 1); 
+          lcd.print("@@#Tap is OFF#@@");
+        }
+        else
+        {
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("CYBAGE HAKATHON");
         lcd.setCursor(0, 1); 
         lcd.print("Todays Use:");
-
         lcd.setCursor(12, 1);
-        lcd.write(0b11011111); 
         lcd.print(totalMilliLitres);
+        lcd.setCursor(16,1);
+        lcd.print("L");
+        }
 
-       pulseCount = 0;
+        pulseCount = 0;
+
+     
+        
     
 
         attachInterrupt(sensorInterrupt, pulseCounter, FALLING);
@@ -191,20 +210,60 @@ void loop()
                 Serial.println("Data was Succesfully Sent on thingSpeks Channel");
                 Serial.print("\n\n");
 
-        // to close the main inlet Automatically if Lekage takes place 
+                  
+           
+        // To check Leakage in the Tap
+         
+       prev=flowMilliLitres;
+
+       if(flowMilliLitres!=0)
+           {
+             if (flowMilliLitres > prev)
+                 {
+                  i=0;
+                  Serial.println("Tap is Open");
+                 } 
+             else if (flowMilliLitres < prev) 
+                 {
+                  i=0;
+                  Serial.println("Tap is Open");
+                 }
+             else
+                {
+                Serial.println("Tap is flowing Constantly");
+                 i++;
+                }
+                   if ( i>5)
+                   {
+                    Serial.println("ALERT Leakage Or Tap is ON");
+                    delay(1000);
+                    Serial.println("ALERT Leakage Or Tap is ON");
+                    delay(1000);
+                    CloseTheTap;
+                   }
+          }
+      else
+          {
+          Serial.println("All Taps are Closed");
+          i=0;
+          }
+          
+      
+             }
+
+             // To close the main inlet by Solenoid Automatically After Over Usage 
 
                 if (totalMilliLitres >= 300)
                 {
                   digitalWrite(Relay, HIGH);
+                  
                 }
                 else
                 {
                   digitalWrite(Relay, LOW);      
                 }
-      
-             }
-  
 
+          
 }
 
 
@@ -229,4 +288,13 @@ void breath(unsigned char color)
         delay(5);
     }
 
+}
+
+
+ // To close the main inlet by Solenoid Automatically by Detecting the Leakge 
+
+void CloseTheTap()
+
+{ 
+  digitalWrite(Relay, HIGH); 
 }
